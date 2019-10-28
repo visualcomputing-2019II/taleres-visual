@@ -1,0 +1,16 @@
+int sizeSTD = 600;
+int fte = 100;
+int base = sizeSTD - (2*fte);
+float h = (sqrt(3)*base)/2;
+background(153);
+size(600, 600);
+fill(153);
+strokeWeight(4);
+triangle(sizeSTD/2, (sizeSTD/2)-(h/2)-(fte/2), fte, (sizeSTD/2)+(h/2)-(fte/2), sizeSTD-fte, (sizeSTD/2)+(h/2)-(fte/2));
+fill(0);
+circle(sizeSTD/2, (sizeSTD/2)+(h/2)+(fte/2), fte);
+circle(fte, (sizeSTD/2)-(h/2)+(fte/2), fte);
+circle( sizeSTD-fte, (sizeSTD/2)-(h/2)+(fte/2), fte);
+fill(153);
+stroke(153);
+triangle(sizeSTD/2, (sizeSTD/2)+(h/2)+(fte/2), fte, (sizeSTD/2)-(h/2)+(fte/2), sizeSTD-fte, (sizeSTD/2)-(h/2)+(fte/2));

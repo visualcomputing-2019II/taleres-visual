@@ -10,9 +10,9 @@
     "position": [
       0,
       0,
-      0
+      443.405029296875
     ]
   },
   "radius": 256,
-  "type": "TWO_D"
+  "type": "ORTHOGRAPHIC"
 }
