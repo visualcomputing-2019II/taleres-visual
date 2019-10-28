@@ -17,6 +17,7 @@ boolean triangleHint = true;
 boolean gridHint = true;
 boolean debug = true;
 boolean shadeHint = false;
+boolean raster = false;
 
 // 3. Use FX2D, JAVA2D, P2D or P3D
 String renderer = P2D;
@@ -84,7 +85,6 @@ void drawTriangleHint() {
   push();
 
   if(shadeHint){
-
     strokeWeight(2);
     noStroke();
   }else {
@@ -127,6 +127,8 @@ void keyPressed() {
     triangleHint = !triangleHint;
   if (key == 's')
     shadeHint = !shadeHint;
+  if (key == 'f')
+    raster = !raster;
   if (key == 'd')
     debug = !debug;
   if (key == '+') {
@@ -149,19 +151,44 @@ void keyPressed() {
 }
 
 //////////////
+//https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage
 float edgeFuction(float v1x, float v1y, float v2x, float v2y, float px, float py) {
   return (((v2x-v1x)*(py-v1y))-((v2y-v1y)*(px-v1x)));
 }
 
-boolean inside_triangle(float v1x, float v1y, float v2x, float v2y, float v3x, float v3y, float px, float py) {
+boolean inner(float v1x, float v1y, float v2x, float v2y, float v3x, float v3y, float px, float py) {
   boolean edge10, edge20, edge30,edge11, edge21, edge31;
-  edge10 = ((((px-v1x)*(v2y-v1y))-((py-v1y)*(v2x-v1x)))>= 0) ?  true :  false;
-  edge20 = ((((px-v2x)*(v3y-v2y))-((py-v2y)*(v3x-v2x)))>= 0) ?  true :  false;
-  edge30 = ((((px-v3x)*(v1y-v3y))-((py-v3y)*(v1x-v3x)))>= 0) ?  true :  false;
+  if ((((px-v1x)*(v2y-v1y))-((py-v1y)*(v2x-v1x)))>= 0){
+    edge10 = true;
+  }else{
+    edge10 = false;
+  }
   
-  edge11 = ((((px-v1x)*(v3y-v1y))-((py-v1y)*(v3x-v1x)))>= 0) ?  true :  false;
-  edge21 = ((((px-v3x)*(v2y-v3y))-((py-v3y)*(v2x-v3x)))>= 0) ?  true :  false;
-  edge31 = ((((px-v2x)*(v1y-v2y))-((py-v2y)*(v1x-v2x)))>= 0) ?  true :  false;
+  if((((px-v2x)*(v3y-v2y))-((py-v2y)*(v3x-v2x)))>= 0){
+    edge20 = true;
+  }else{
+    edge20 = false;
+  }
+  if((((px-v3x)*(v1y-v3y))-((py-v3y)*(v1x-v3x)))>= 0){
+    edge30 = true;
+  }else{
+    edge30= false;
+  }
+  if ((((px-v1x)*(v3y-v1y))-((py-v1y)*(v3x-v1x)))>= 0){
+    edge11=true;
+  }else{
+    edge11=false;
+  }
+  if((((px-v3x)*(v2y-v3y))-((py-v3y)*(v2x-v3x)))>= 0){
+    edge21=true;
+  }else{
+    edge21=false;
+  }
+  if((((px-v2x)*(v1y-v2y))-((py-v2y)*(v1x-v2x)))>= 0){
+    edge31=true;
+  }else{
+     edge31=false; 
+  }
   return (edge10 && edge20 && edge30)||(edge11 && edge21 && edge31);
 }
 
@@ -185,38 +212,31 @@ void triangleRaster() {
   if (debug) {
     pushStyle();
     noStroke();
-    int paso;
-    //se recorre el rectangulo que bordea el triangulo
     for (int x=minx; x<maxx; x++) {
       for (int y=miny; y<maxy; y++) {
-        float f12, f23, f31, area, w1, w2, w3;
-        float color1=0.0, color2=0.0, color3 =0.0;
-          paso=1;
-          if (inside_triangle(v1x, v1y, v2x, v2y, v3x, v3y, (x), (y))) {
+        float f12, f23, f31, area, A1, A2, A3;
+        float color1=0, color2=0, color3 =0;
+          if (inner(v1x, v1y, v2x, v2y, v3x, v3y, (x), (y))) {
               f12 = edgeFuction(v1x, v1y, v2x, v2y, (x), (y));
               f23 = edgeFuction(v2x, v2y, v3x, v3y, (x), (y));
               f31 = edgeFuction(v3x, v3y, v1x, v1y, (x), (y));
-              area=abs(f12)+abs(f23)+abs(f31);
-              
-              w1=(f23)/area;
-              w2=(f31)/area;
-              w3=(f12)/area;
-              color1+= abs(w1*255);
-              color2+= abs(w2*255);
-              color3+= abs(w3*255);
+              area=abs(f12)+abs(f23)+abs(f31);       
+              A1=(f23)/area;
+              A2=(f31)/area;
+              A3=(f12)/area;
+              color1= color1+abs(A1*255);
+              color2= color2+abs(A2*255);
+              color3= color3+abs(A3*255);
             }
-          color1 /= Math.pow(paso, 2);
-          color2 /= Math.pow(paso, 2);
-          color3 /= Math.pow(paso, 2);
-        if(shadeHint){
-          if(inside_triangle(v1x, v1y, v3x, v3y, v2x, v2y, (x), (y))){
+        if(raster){
+          if(inner(v1x, v1y, v3x, v3y, v2x, v2y, (x), (y))){
           fill(round(color1), round(color2), round(color3));
-          rect(x, y, 1, 1);
+          rect(x, y, 0.9, 0.9);
           }
         }else{
-          if(inside_triangle(v1x, v1y, v3x, v3y, v2x, v2y, (x), (y))){
-          fill(255, 255, 255);
-          rect(x, y, 1, 1);
+          if(inner(v1x, v1y, v3x, v3y, v2x, v2y, (x), (y))){
+          fill(0, 255, 0);
+          rect(x, y, 0.9, 0.9);
           }
         }
       }
