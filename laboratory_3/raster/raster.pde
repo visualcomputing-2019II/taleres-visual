@@ -15,6 +15,8 @@ int n = 4;
 
 // 2. Hints
 boolean triangleHint = true;
+boolean anti = true;
+boolean raster = true;
 boolean gridHint = true;
 boolean debug = true;
 
@@ -97,19 +99,13 @@ void triangleRaster() {
   //fill(0,255,0);
   noStroke();
   boolean isClockwise = (v2.x() - v1.x())*(v3.y() - v1.y()) - (v3.x() - v1.x())*(v2.y() - v1.y()) < 0;
-  boolean first = true;
-  boolean inside = false;
-  
-  int t = 0;
-  int y = 0;
-  int o = 0;
-  int p = 0;
+
   
   
   
   for(int i = -squaresPerSide/2; i < squaresPerSide/2; i++)
   {
-    first=true;
+    
     for(int j = -squaresPerSide/2; j < squaresPerSide/2; j++)
     {
       //print("Edge v0: "+edge(i,j,0,1));
@@ -118,20 +114,77 @@ void triangleRaster() {
       ((edge(i,j,0,1) < 0 && edge(i,j,2,0) < 0 && edge(i,j,1,2) < 0) && isClockwise)) 
       {
         float barCoords[] = barycentric(i,j);
+        
+        
+        // Matriz que contiene los colores del cuadro evaluado y los ocho cuadros adyacentes
+        
+        int antialiasing[][] = new int[9][3];
+        
+        
+        // La funcion defColor determina cuál es el color del cuadro adyacente usando 
+        //las coordenadas baricéntricas si el cuadro está dentro del triángulo. Si el 
+        //cuadro no está dentro del triángulo, se supone negro.
+        
+        antialiasing [0] = defColor(i+1,j+1,isClockwise);
+        antialiasing [1] = defColor(i+1,j,isClockwise);
+        antialiasing [2] = defColor(i+1,j-1,isClockwise);
+        antialiasing [3] = defColor(i,j+1,isClockwise);
+        antialiasing [4] = defColor(i,j,isClockwise);
+        antialiasing [5] = defColor(i,j-1,isClockwise);
+        antialiasing [6] = defColor(i-1,j+1,isClockwise);
+        antialiasing [7] = defColor(i-1,j,isClockwise);
+        antialiasing [8] = defColor(i-1,j-1,isClockwise);
+
+        
+        
+        
+        
+
+        
+        
+        
+        
         int colors[] = new int[3];
-        for(int k=0; k<3; k++) colors[k] = (int)(barCoords[k]*256); 
+        for(int k=0; k<3; k++) colors[k] = (int)(barCoords[k]*256);
+        
+        // Se usan los colores del antialiasing, cuando se presiona la tecla "a"
+        // La técnica es el promedio de los colores de los 9 cuadros mencionados
+        
+        if (anti){
+          for(int k=0; k<3; k++){
+            int sum = 0;
+            for(int z=0; z<=8; z++) {
+              sum = sum + antialiasing [z][k];
+            }
+            colors[k]=(int) (sum/8);
+          }
+        }
+        
+        // Si se oprime la tecla "s" los cuadros dentro del triángulo, son blancos.
+        
+        if (raster){
+          colors[0] = 255;
+          colors[2] = 255;
+          colors[1] = 255;
+        }
+        
+        
+        
+        
         fill(colors[0],colors[1],colors[2]);
         rect(i,j,1,1);
-        t=i;
-        y=j;
-        o=1;
-        p=1;
-        if (first==true){
-          //fill(255,255,255);
-          //rect(i,j,1,1);
-          first = false;
-        }
-        inside = true;
+        
+        
+        
+        
+        
+        
+        
+
+        
+        
+        
+
         
         
       }
@@ -140,11 +193,7 @@ void triangleRaster() {
       
     }
     
-    if (inside){
-    //fill(255,255,255);
-    //rect(t,y,o,p);
-    inside = false;
-    }
+
       
     }
     
@@ -177,6 +226,12 @@ void drawTriangleHint() {
 }
 
 void keyPressed() {
+  if (key == 'a'){
+    anti = !anti;
+  }
+  if (key == 's'){
+    raster = !raster;
+  }
   if (key == 'g')
     gridHint = !gridHint;
   if (key == 't')
@@ -226,4 +281,22 @@ float[] barycentric(int px, int py)
   float p2 = Math.abs(edge(px, py, 0, 1));
   float area = (p0 + p1 + p2);
   return new float[]{p0/area, p1/area, p2/area};
+}
+int [] defColor(int i, int j, boolean isClockwise)
+{
+  
+  if(
+    ((edge(i,j,0,1) >= 0 && edge(i,j,2,0) >= 0 && edge(i,j,1,2) >= 0) && !isClockwise) ||
+    ((edge(i,j,0,1) < 0 && edge(i,j,2,0) < 0 && edge(i,j,1,2) < 0) && isClockwise)) 
+  {
+    float barCoords[] = barycentric(i,j);
+    int colors[] = new int[3];
+    for(int k=0; k<3; k++) colors[k] = (int)(barCoords[k]*256); 
+    return new int [] {colors[0],colors[1],colors[2]};
+    
+  }else{
+    return new int [] {0,0,0};
+  }
+  
+
 }
